@@ -1,5 +1,6 @@
 import apriltag
 import cv2
+import numpy as np
 
 options = apriltag.DetectorOptions(families='tag36h11')
 detector = apriltag.Detector(options)
@@ -17,6 +18,9 @@ def runPipeline(inputImage, llrobot):
 	# print("[INFO] detecting AprilTags...")
 	results = detector.detect(gray)
 	# print("[INFO] {} total apriltags detected".format(len(results)))
+
+	largestArea = 0
+	returnContour = np.array([[0, 0], [0, 0], [0, 0]], dtype = np.int32)
 
 	# loop over the AprilTag detection results
 	for r in results:
@@ -42,4 +46,12 @@ def runPipeline(inputImage, llrobot):
 			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 		# print("[INFO] tag family: {}".format(tagFamily))
 
-	return image, llpython
+		# figure out contours?
+		contour = np.array([[ptA[0], ptA[1]], [ptB[0], ptB[1]], [ptD[0], ptD[1]]], dtype = np.int32)
+		contourArea = abs((ptA[0] - ptD[0])) * abs((ptA[1] - ptD[1]))
+
+		if contourArea > largestArea:
+			largestArea = contourArea
+			returnContour = contour
+
+	return returnContour, image, llpython

@@ -20,7 +20,7 @@ def runPipeline(inputImage, llrobot):
 	# print("[INFO] {} total apriltags detected".format(len(results)))
 
 	largestArea = 0
-	returnContour = np.array([[0, 0], [0, 0], [0, 0]], dtype = np.int32)
+	returnContour = np.array([[0, 0], [0, 0], [0, 0], [0, 0]], dtype = np.int32)
 
 	# loop over the AprilTag detection results
 	for r in results:
@@ -47,7 +47,7 @@ def runPipeline(inputImage, llrobot):
 		# print("[INFO] tag family: {}".format(tagFamily))
 
 		# figure out contours?
-		contour = np.array([[ptA[0], ptA[1]], [ptB[0], ptB[1]], [ptD[0], ptD[1]]], dtype = np.int32)
+		contour = np.array([[ptA[0], ptA[1]], [ptB[0], ptB[1]], [ptC[0], ptC[1]], [ptD[0], ptD[1]]], dtype = np.int32)
 		contourArea = abs((ptA[0] - ptD[0])) * abs((ptA[1] - ptD[1]))
 
 		if contourArea > largestArea:

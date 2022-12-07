@@ -2,9 +2,11 @@
 import copy
 import time
 import argparse
+import threading
 
 import cv2 as cv
 from pupil_apriltags import Detector
+from networktables import NetworkTables
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -25,8 +27,31 @@ def get_args():
 
     return args
 
+# Need to do this because network tables dont instantly init. This is halt until it is loaded.
+def initNetworkTables():
+    cond = threading.Condition()
+    notified = [False]
+
+    # Used to connect to network tables
+    def connectionListener(connected, info):
+            print(info, '; Connected=%s' % connected)
+            with cond:
+                notified[0] = True
+                cond.notify()
+
+    NetworkTables.initialize(server='10.54.68.2')
+    NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
+
+    with cond:
+        print("Waiting")
+        if not notified[0]:
+            cond.wait()
 
 def main():
+
+    initNetworkTables()
+    aprilTagsNetworkTable = NetworkTables.getTable('aprilTags')
+
     args = get_args()
 
     cap_device = args.device
@@ -72,6 +97,30 @@ def main():
             camera_params=None,
             tag_size=None,
         )
+
+        centers = []
+        corners_01 = []
+        corners_02 = []
+        corners_03 = []
+        corners_04 = []
+
+        for tag in tags:
+            tag_family = tag.tag_family
+            tag_id = tag.tag_id
+            center = tag.center
+            corners = tag.corners
+
+            centers.append(int(center[0]), int(center[1]))
+            corners_01.append(int(corners[0][0]), int(corners[0][1]))
+            corners_02.append(int(corners[1][0]), int(corners[1][1]))
+            corners_03.append(int(corners[2][0]), int(corners[2][1]))
+            corners_04.append(int(corners[3][0]), int(corners[3][1]))
+
+        aprilTagsNetworkTable.putNumberArray('centers', centers)
+        aprilTagsNetworkTable.putNumberArray('corners_01', corners_01)
+        aprilTagsNetworkTable.putNumberArray('corners_02', corners_02)
+        aprilTagsNetworkTable.putNumberArray('corners_03', corners_03)
+        aprilTagsNetworkTable.putNumberArray('corners_04', corners_04)
 
         debug_image = draw_tags(debug_image, tags, elapsed_time)
 
